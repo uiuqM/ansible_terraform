@@ -1,0 +1,105 @@
+- hosts: terraform-ansible
+  tasks:
+     - name: update apt
+       apt:
+         update_cache: yes
+         allow-unauthenticated: yes
+         force: yes
+       become: yes
+     - name: install packages
+       apt:
+         name: '{{item}}'
+       become: yes
+       with_items:
+         - ca-certificates
+         - curl
+         - gnupg
+     
+     - name: Docker GPG
+       shell: sudo install -m 0755 -d /etc/apt/trusted.gpg.d
+       changed_when: false
+
+     - name: curl
+       get_url: 
+         url: https://download.docker.com/linux/ubuntu/gpg
+         dest: /etc/apt/trusted.gpg.d/docker.gpg
+       become: yes
+     - name: add apt key
+       apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+       become: yes
+     - name: chmod
+       shell: sudo chmod a+r /etc/apt/trusted.gpg.d/docker.gpg
+       changed_when: false
+
+     - name: add docker repository
+       apt_repository:
+        repo: "deb [arch=amd64 signed_by=/etc/apt/trusted.gpg.d/docker.gpg] https://download.docker.com/linux/ubuntu jammy stable"
+        state: present
+        update_cache: true
+       become: yes
+
+     - name: update apt
+
+       apt:
+         update_cache: yes
+         allow-unauthenticated: yes
+       become: yes
+
+     - name: install docker
+       apt:
+         name: '{{ item }}'
+       become: yes
+       with_items:
+         - docker-ce 
+         - docker-ce-cli 
+         - containerd.io 
+         - docker-buildx-plugin 
+         - docker-compose-plugin
+
+     - name: add user to docker group
+       shell: sudo usermod -aG docker $USER
+       changed_when: false
+
+     - name: latest version of kubectl
+       shell: curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+       changed_when: false
+
+     - name: install kubectl
+       shell: sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+       changed_when: false
+     
+     - name: curl minikube
+       shell: curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+       changed_when: false
+        
+     - name: install minikube
+       shell: sudo install minikube-linux-amd64 /usr/local/bin/minikube
+       changed_when: false
+
+     - name: clone repository
+       shell: git clone https://github.com/uiuqM/project-kubernetes
+       changed_when: false
+    
+     - name: chmod
+       shell: chmod +x project-kubernetes/setup.sh
+       changed_when: false
+
+     - name: exec project!
+       shell: |
+        cd project-kubernetes
+        ./setup.sh
+    
+     - name: install nginx
+       apt:
+        name: nginx
+       become: yes
+
+     - name: copy nginx conf
+       shell: cp project-kubernetes/nginx.conf /etc/nginx/nginx.conf
+       become: yes
+
+     - name: restart nginx
+       shell: nginx -s reload
+       changed_when: false
+       become: yes
