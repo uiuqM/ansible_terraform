@@ -17,6 +17,7 @@ resource "aws_instance" "app_server" {
   ami           = "ami-053b0d53c279acc90"
   instance_type = "t3.small"
   key_name = "con"
+  vpc_security_group_ids = [aws_security_group.groupTeste.id]
   tags = {
     Name = "Market project"
   }

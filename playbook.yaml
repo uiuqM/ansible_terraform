@@ -58,8 +58,9 @@
          - docker-compose-plugin
 
      - name: add user to docker group
-       shell: sudo usermod -aG docker $USER
+       shell: usermod -aG docker $USER
        changed_when: false
+       become: yes
 
      - name: latest version of kubectl
        shell: curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -80,7 +81,12 @@
      - name: clone repository
        shell: git clone https://github.com/uiuqM/project-kubernetes
        changed_when: false
-    
+
+     - name: minikube start
+       shell: minikube start
+       become_user: ubuntu
+       changed_when: false
+
      - name: chmod
        shell: chmod +x project-kubernetes/setup.sh
        changed_when: false
@@ -88,7 +94,7 @@
      - name: exec project!
        shell: |
         cd project-kubernetes
-        ./setup.sh
+        sh ./setup.sh
     
      - name: install nginx
        apt:
