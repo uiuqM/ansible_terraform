@@ -58,9 +58,14 @@
          - docker-compose-plugin
 
      - name: add user to docker group
-       shell: usermod -aG docker $USER
-       changed_when: false
+       user:
+        name: ubuntu
+        groups: docker
+        append: yes
        become: yes
+     - name: reset
+       meta:
+        reset_connection
 
      - name: latest version of kubectl
        shell: curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -78,12 +83,19 @@
        shell: sudo install minikube-linux-amd64 /usr/local/bin/minikube
        changed_when: false
 
+     - name: update apt
+
+       apt:
+         update_cache: yes
+         allow-unauthenticated: yes
+       become: yes
+
      - name: clone repository
        shell: git clone https://github.com/uiuqM/project-kubernetes
        changed_when: false
 
-     - name: minikube start
-       shell: minikube start
+     - name: minikube start 
+       shell: minikube start 
        become_user: ubuntu
        changed_when: false
 
